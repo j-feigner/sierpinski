@@ -88,7 +88,7 @@ function FractalGenerator() {
             var outerTriangle = new Triangle(point1, point2, point3);
 
             // Set iteration count and call recursive function to draw to rendering canvas
-            var iterations = 12;
+            var iterations = 13;
             this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx);
             this.renderingCtx.stroke();
     
@@ -101,6 +101,7 @@ function FractalGenerator() {
     }
 
     this.createEventListeners = function() {
+        // Click and drag events
         this.displayCanvas.addEventListener("mousedown", () => {
             this.isDragging = true;
             this.display.drag.innerHTML = this.isDragging;
@@ -113,8 +114,7 @@ function FractalGenerator() {
                 this.display.scrollX.innerHTML = this.viewX;
                 this.display.scrollY.innerHTML = this.viewY;
 
-                this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
-                this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width, this.displayCanvas.height);
+                this.draw();
             }
         })
         this.displayCanvas.addEventListener("mouseup", () => {
@@ -122,13 +122,39 @@ function FractalGenerator() {
             this.display.drag.innerHTML = this.isDragging;
         })
 
+        // Zoom events
         this.displayCanvas.addEventListener("wheel", (event) => {
-            scrollValue -= event.deltaY * 0.0001;
+            var widthRatio = this.renderingCanvas.width / this.displayCanvas.width / this.zoom;
+            var heightRatio = this.renderingCanvas.height / this.displayCanvas.height / this.zoom;
 
-            zoomRatio = Math.round((1 + scrollValue) * 100) / 100;
-    
-            scrollValueDisplay.innerHTML = zoomRatio;
+            var relativeX = (event.offsetX - this.viewX) * widthRatio;
+            var relativeY = (event.offsetY - this.viewY) * heightRatio;
+
+            this.zoom -= event.deltaY * 0.001;
+            this.display.zoom.innerHTML = this.zoom;
+
+            this.viewX = event.offsetX - ((relativeX * this.displayCanvas.width * this.zoom) / this.renderingCanvas.width);
+            this.viewY = event.offsetY - ((relativeY * this.displayCanvas.height * this.zoom) / this.renderingCanvas.height);
+
+            this.draw();
         })
+
+        // Click events
+        this.displayCanvas.addEventListener("click", (event) => {
+            var widthRatio = this.renderingCanvas.width / this.displayCanvas.width / this.zoom;
+            var heightRatio = this.renderingCanvas.height / this.displayCanvas.height / this.zoom;
+
+            var relativeX = (event.offsetX - this.viewX) * widthRatio;
+            var relativeY = (event.offsetY - this.viewY) * heightRatio;
+
+            this.display.relativeX.innerHTML = relativeX;
+            this.display.relativeY.innerHTML = relativeY;
+        })
+    }
+
+    this.draw = function() {
+        this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
+        this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width * this.zoom, this.displayCanvas.height * this.zoom);
     }
 
     // Recursive function that creates all lines within 
@@ -165,6 +191,8 @@ function FractalGeneratorDisplay() {
     this.scrollX = document.getElementById("viewXValue");
     this.scrollY = document.getElementById("viewYValue");
     this.drag = document.getElementById("draggingValue");
+    this.relativeX = document.getElementById("relativeX");
+    this.relativeY = document.getElementById("relativeY");
 
     this.zoom.innerHTML = "ZOOM";
     this.scrollX.innerHTML = "SCROLL X";
