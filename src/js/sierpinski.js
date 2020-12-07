@@ -10,39 +10,7 @@ function main() {
         zoomRatio = Math.round((1 + scrollValue) * 100) / 100;
 
         scrollValueDisplay.innerHTML = zoomRatio;
-    })
-    c.addEventListener("mousedown", (event) => {
-        is_dragging = true;
-
-        dragStartX = event.offsetX;
-        dragStartY = event.offsetY;
-
-        draggingDisplay.innerHTML = is_dragging;
-    })
-    c.addEventListener("mousemove", (event) => {
-        if(is_dragging) {
-            dragDiffX = event.offsetX - dragStartX;
-            dragDiffY = event.offsetY - dragStartY;
-
-            view.originX += dragDiffX;
-            view.originY += dragDiffY;
-
-            dragStartX = event.offsetX;
-            dragStartY = event.offsetY;
-
-            viewXValueDisplay.innerHTML = view.originX;
-            viewYValueDisplay.innerHTML = view.originY;
-
-            ctx.clearRect(0, 0, c.width, c.height);
-            ctx.drawImage(renderingCanvas, view.originX, view.originY, 1920, 1080);
-            ctx.stroke();
-        }
-    })
-    c.addEventListener("mouseup", () => {
-        is_dragging = false;
-
-        draggingDisplay.innerHTML = is_dragging;
-    }) */
+    })*/
 }
 
 function Point(x, y) {
@@ -86,9 +54,12 @@ function FractalGenerator() {
     this.renderScaleFactor = 4;
 
     this.zoom = 1.0;
-    this.scrollX = 0.0;
-    this.scrollY = 0.0;
 
+    this.viewX = 0.0;
+    this.viewY = 0.0;
+
+    this.dragX = 0;
+    this.dragY = 0;
     this.isDragging = false;
 
     this.display = new FractalGeneratorDisplay();
@@ -100,10 +71,12 @@ function FractalGenerator() {
         this.renderingCanvas.width = this.displayCanvas.width * this.renderScaleFactor;
         this.renderingCanvas.height = this.displayCanvas.height * this.renderScaleFactor;
 
+        this.createEventListeners();
+
         if(option === "sierpinski") {
             // Line style settings for triangle
             this.renderingCtx.lineWidth = 1;
-            this.renderingCtx.strokeStyle = "black";
+            this.renderingCtx.strokeStyle = "white";
     
             // Create initial points of outer triangle
             var centerX = this.renderingCanvas.width / 2;
@@ -120,11 +93,43 @@ function FractalGenerator() {
             this.renderingCtx.stroke();
     
             // Draw scaled image of rendering canvas to display canvas
-            this.displayCtx.drawImage(this.renderingCanvas, 0, 0, this.displayCanvas.width, this.displayCanvas.height);
+            this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width, this.displayCanvas.height);
         } else {
             alert("BAD");
             return;
         }
+    }
+
+    this.createEventListeners = function() {
+        this.displayCanvas.addEventListener("mousedown", (event) => {
+            this.isDragging = true;
+            this.display.drag.innerHTML = this.isDragging;
+       
+            this.dragX = event.offsetX;
+            this.dragY = event.offsetY;
+        })
+        this.displayCanvas.addEventListener("mousemove", (event) => {
+            if(this.isDragging) {
+                var deltaX = event.offsetX - this.dragX;
+                var deltaY = event.offsetY - this.dragY;
+
+                this.viewX += deltaX;
+                this.viewY += deltaY;
+
+                this.display.scrollX.innerHTML = this.viewX;
+                this.display.scrollY.innerHTML = this.viewY;
+
+                this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
+                this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width, this.displayCanvas.height);
+
+                this.dragX = event.offsetX;
+                this.dragY = event.offsetY;
+            }
+        })
+        this.displayCanvas.addEventListener("mouseup", () => {
+            this.isDragging = false;
+            this.display.drag.innerHTML = this.isDragging;
+        })
     }
 
     // Recursive function that creates all lines within 
