@@ -2,7 +2,6 @@ window.onload = main;
 
 function main() {
     var app = new FractalGenerator();
-    app.setRenderScale(4);
     app.start("sierpinski");
 /* 
     c.addEventListener("wheel", (event) => {
@@ -79,21 +78,28 @@ function Rectangle(x, y, width, height) {
 
 function FractalGenerator() {
     this.renderingCanvas = document.createElement("canvas");
-    this.renderingCanvas.width = window.innerWidth;
-    this.renderingCanvas.height = window.innerHeight;
-
     this.renderingCtx = this.renderingCanvas.getContext("2d");
 
-    this.view = new FractalViewport();
+    this.displayCanvas = document.getElementById("fractalCanvas");
+    this.displayCtx = this.displayCanvas.getContext("2d");
+
+    this.renderScaleFactor = 4;
+
+    this.zoom = 1.0;
+    this.scrollX = 0.0;
+    this.scrollY = 0.0;
+
+    this.isDragging = false;
 
     this.display = new FractalGeneratorDisplay();
 
-    this.setRenderScale = function(scaleFactor) {
-        this.renderingCanvas.width *= scaleFactor;
-        this.renderingCanvas.height *= scaleFactor;
-    }
-
     this.start = function(option) {
+        this.displayCanvas.width = window.innerWidth;
+        this.displayCanvas.height = window.innerHeight;
+
+        this.renderingCanvas.width = this.displayCanvas.width * this.renderScaleFactor;
+        this.renderingCanvas.height = this.displayCanvas.height * this.renderScaleFactor;
+
         if(option === "sierpinski") {
             // Line style settings for triangle
             this.renderingCtx.lineWidth = 1;
@@ -101,11 +107,11 @@ function FractalGenerator() {
     
             // Create initial points of outer triangle
             var centerX = this.renderingCanvas.width / 2;
-            var centerY = this.renderingCanvas.height / 2;
+            var halfSideLength = this.renderingCanvas.height / Math.sqrt(3); 
 
-            var point1 = new Point(this.renderingCanvas.width / 2, 0);
-            var point2 = new Point((this.renderingCanvas.width + this.renderingCanvas.height) / 2, this.renderingCanvas.height);
-            var point3 = new Point((this.renderingCanvas.width - this.renderingCanvas.height) / 2, this.renderingCanvas.height);
+            var point1 = new Point(centerX, 0);
+            var point2 = new Point((this.renderingCanvas.width / 2) + halfSideLength, this.renderingCanvas.height);
+            var point3 = new Point((this.renderingCanvas.width / 2) - halfSideLength, this.renderingCanvas.height);
             var outerTriangle = new Triangle(point1, point2, point3);
 
             // Set iteration count and call recursive function to draw to rendering canvas
@@ -114,7 +120,7 @@ function FractalGenerator() {
             this.renderingCtx.stroke();
     
             // Draw scaled image of rendering canvas to display canvas
-            this.view.displayCtx.drawImage(this.renderingCanvas, 0, 0, this.view.rect.w, this.view.rect.h);
+            this.displayCtx.drawImage(this.renderingCanvas, 0, 0, this.displayCanvas.width, this.displayCanvas.height);
         } else {
             alert("BAD");
             return;
@@ -150,32 +156,16 @@ function FractalGenerator() {
     }
 }
 
-function FractalViewport() {
-    this.rect = new Rectangle(0, 0, window.innerWidth, window.innerHeight);
-
-    this.displayCanvas = document.getElementById("fractalCanvas");
-    this.displayCtx = this.displayCanvas.getContext("2d");
-
-    this.zoom = 1.0;
-    this.scrollX = 0.0;
-    this.scrollY = 0.0;
-
-    this.is_dragging = false;
-
-    this.displayCanvas.width = this.rect.w;
-    this.displayCanvas.height = this.rect.h;
-}
-
 function FractalGeneratorDisplay() {
-    this.zoomDisplay = document.getElementById("scrollValue");
-    this.scrollXDisplay = document.getElementById("viewXValue");
-    this.scrollYDisplay = document.getElementById("viewYValue");
-    this.dragDisplay = document.getElementById("draggingValue");
+    this.zoom = document.getElementById("scrollValue");
+    this.scrollX = document.getElementById("viewXValue");
+    this.scrollY = document.getElementById("viewYValue");
+    this.drag = document.getElementById("draggingValue");
 
-    this.zoomDisplay.innerHTML = "ZOOM";
-    this.scrollXDisplay.innerHTML = "SCROLL X";
-    this.scrollYDisplay.innerHTML = "SCROLL Y";
-    this.dragDisplay.innerHTML = "DRAG BOOL";
+    this.zoom.innerHTML = "ZOOM";
+    this.scrollX.innerHTML = "SCROLL X";
+    this.scrollY.innerHTML = "SCROLL Y";
+    this.drag.innerHTML = "DRAG BOOL";
 }
 
 function midpoint(point1, point2) {
