@@ -101,34 +101,33 @@ function FractalGenerator() {
     }
 
     this.createEventListeners = function() {
-        this.displayCanvas.addEventListener("mousedown", (event) => {
+        this.displayCanvas.addEventListener("mousedown", () => {
             this.isDragging = true;
             this.display.drag.innerHTML = this.isDragging;
-       
-            this.dragX = event.offsetX;
-            this.dragY = event.offsetY;
         })
         this.displayCanvas.addEventListener("mousemove", (event) => {
             if(this.isDragging) {
-                var deltaX = event.offsetX - this.dragX;
-                var deltaY = event.offsetY - this.dragY;
-
-                this.viewX += deltaX;
-                this.viewY += deltaY;
+                this.viewX += event.movementX;
+                this.viewY += event.movementY;
 
                 this.display.scrollX.innerHTML = this.viewX;
                 this.display.scrollY.innerHTML = this.viewY;
 
                 this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
                 this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width, this.displayCanvas.height);
-
-                this.dragX = event.offsetX;
-                this.dragY = event.offsetY;
             }
         })
         this.displayCanvas.addEventListener("mouseup", () => {
             this.isDragging = false;
             this.display.drag.innerHTML = this.isDragging;
+        })
+
+        this.displayCanvas.addEventListener("wheel", (event) => {
+            scrollValue -= event.deltaY * 0.0001;
+
+            zoomRatio = Math.round((1 + scrollValue) * 100) / 100;
+    
+            scrollValueDisplay.innerHTML = zoomRatio;
         })
     }
 
