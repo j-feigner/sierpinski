@@ -1,65 +1,22 @@
 window.onload = main;
 
 function main() {
-    var c = document.getElementById("fractalCanvas");
-    var canvasContainer = document.getElementById("fractalBlock");
-
-    c.width = canvasContainer.offsetWidth;
-    c.height = canvasContainer.offsetHeight;
-
-    var ctx = c.getContext("2d");
-
-    var view = new Viewport(0, 0, c.width, c.height);
-
-    ctx.beginPath();
-    ctx.translate(0.5, 0.5);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "blue";
-
-    var initialPoint1 = new Point(950, 10);
-    var initialPoint2 = new Point(50, 950);
-    var initialPoint3 = new Point(1850, 950);
-
-    drawTriangle(initialPoint1, initialPoint2, initialPoint3, ctx);
-
-    //sierpinski(9, initialPoint1, initialPoint2, initialPoint3, ctx);
-
-    ctx.stroke();
-    ctx.closePath();
-
-    var scrollValue = 0;
-    var is_dragging = false;
-
-    var scrollValueDisplay = document.getElementById("scrollValue");
-    var draggingDisplay = document.getElementById("draggingValue");
-    var viewXValueDisplay = document.getElementById("viewXValue");
-    var viewYValueDisplay = document.getElementById("viewYValue");
-
-    scrollValueDisplay.innerHTML = scrollValue;
-    draggingDisplay.innerHTML = is_dragging;
-    viewXValueDisplay.innerHTML = view.originX;
-    viewYValueDisplay.innerHTML = view.originY;
-
-    var dragStartX = 0;
-    var dragStartY = 0;
-    var dragDiffX = 0;
-    var dragDiffY = 0;
-
-    var viewStartX = view.originX;
-    var viewStartY = view.originY;
-
+    var app = new FractalGenerator();
+    app.setRenderScale(4);
+    app.start("sierpinski");
+/* 
     c.addEventListener("wheel", (event) => {
-        scrollValue -= event.deltaY * 0.01;
+        scrollValue -= event.deltaY * 0.0001;
 
-        scrollValueDisplay.innerHTML = scrollValue;
+        zoomRatio = Math.round((1 + scrollValue) * 100) / 100;
+
+        scrollValueDisplay.innerHTML = zoomRatio;
     })
     c.addEventListener("mousedown", (event) => {
         is_dragging = true;
 
         dragStartX = event.offsetX;
         dragStartY = event.offsetY;
-        viewStartX = view.originX;
-        viewStartY = view.originY;
 
         draggingDisplay.innerHTML = is_dragging;
     })
@@ -68,18 +25,25 @@ function main() {
             dragDiffX = event.offsetX - dragStartX;
             dragDiffY = event.offsetY - dragStartY;
 
-            view.originX = viewStartX + dragDiffX;
-            view.originY = viewStartY + dragDiffY;
+            view.originX += dragDiffX;
+            view.originY += dragDiffY;
+
+            dragStartX = event.offsetX;
+            dragStartY = event.offsetY;
 
             viewXValueDisplay.innerHTML = view.originX;
             viewYValueDisplay.innerHTML = view.originY;
+
+            ctx.clearRect(0, 0, c.width, c.height);
+            ctx.drawImage(renderingCanvas, view.originX, view.originY, 1920, 1080);
+            ctx.stroke();
         }
     })
     c.addEventListener("mouseup", () => {
         is_dragging = false;
 
         draggingDisplay.innerHTML = is_dragging;
-    })
+    }) */
 }
 
 function Point(x, y) {
@@ -87,37 +51,131 @@ function Point(x, y) {
     this.y = y; 
 }
 
-function Viewport(originX, originY, width, height) {
-    this.originX = originX;
-    this.originY = originY;
-    this.width = width;
-    this.height = height;
+function Triangle(point1, point2, point3) {
+    this.point1 = point1;
+    this.point2 = point2;
+    this.point3 = point3;
 }
 
-function drawTriangle(point1, point2, point3, ctx) {
-    ctx.moveTo(point1.x, point1.y);
+function Rectangle(x, y, width, height) {
+    this.x = x;
+    this.y = y;
+    this.w = width;
+    this.h = height;
 
-    ctx.lineTo(point2.x, point2.y);
-    ctx.lineTo(point3.x, point3.y);
-    ctx.lineTo(point1.x, point1.y);
-}
-
-function sierpinski(iteration, point1, point2, point3, ctx) {
-    var midpoint1 = midpoint(point1, point2);
-    var midpoint2 = midpoint(point2, point3);
-    var midpoint3 = midpoint(point3, point1);
-
-    drawTriangle(midpoint1, midpoint2, midpoint3, ctx);
-
-    iteration -= 1;
-
-    if(iteration === 0) {
-        return;
-    } else {
-        sierpinski(iteration, point1, midpoint1, midpoint3, ctx);
-        sierpinski(iteration, midpoint1, point2, midpoint2, ctx);
-        sierpinski(iteration, midpoint3, midpoint2, point3, ctx);
+    // Boolean function that returns true if given point is within bounds
+    this.pointInBounds = function(point) {
+        var x1 = this.x
+        var x2 = this.x + this.w;
+        var y1 = this.y;
+        var y2 = this.y + this.h;
+        if(point.x > x1 && point.x < x2 && point.y > y1 && point.y < y2) {
+            return true;
+        } else {
+            return false;
+        }
     }
+}
+
+function FractalGenerator() {
+    this.renderingCanvas = document.createElement("canvas");
+    this.renderingCanvas.width = window.innerWidth;
+    this.renderingCanvas.height = window.innerHeight;
+
+    this.renderingCtx = this.renderingCanvas.getContext("2d");
+
+    this.view = new FractalViewport();
+
+    this.display = new FractalGeneratorDisplay();
+
+    this.setRenderScale = function(scaleFactor) {
+        this.renderingCanvas.width *= scaleFactor;
+        this.renderingCanvas.height *= scaleFactor;
+    }
+
+    this.start = function(option) {
+        if(option === "sierpinski") {
+            // Line style settings for triangle
+            this.renderingCtx.lineWidth = 1;
+            this.renderingCtx.strokeStyle = "black";
+    
+            // Create initial points of outer triangle
+            var centerX = this.renderingCanvas.width / 2;
+            var centerY = this.renderingCanvas.height / 2;
+
+            var point1 = new Point(this.renderingCanvas.width / 2, 0);
+            var point2 = new Point((this.renderingCanvas.width + this.renderingCanvas.height) / 2, this.renderingCanvas.height);
+            var point3 = new Point((this.renderingCanvas.width - this.renderingCanvas.height) / 2, this.renderingCanvas.height);
+            var outerTriangle = new Triangle(point1, point2, point3);
+
+            // Set iteration count and call recursive function to draw to rendering canvas
+            var iterations = 12;
+            this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx);
+            this.renderingCtx.stroke();
+    
+            // Draw scaled image of rendering canvas to display canvas
+            this.view.displayCtx.drawImage(this.renderingCanvas, 0, 0, this.view.rect.w, this.view.rect.h);
+        } else {
+            alert("BAD");
+            return;
+        }
+    }
+
+    // Recursive function that creates all lines within 
+    // sierpinski triangle on a given iteration count.
+    this.sierpinskiTriangle = function(iteration, triangle, ctx) {
+        // Draw initial triangle given to function
+        ctx.moveTo(triangle.point1.x, triangle.point1.y);
+        ctx.lineTo(triangle.point2.x, triangle.point2.y);
+        ctx.lineTo(triangle.point3.x, triangle.point3.y);
+        ctx.lineTo(triangle.point1.x, triangle.point1.y);
+
+        // Calculate midpoints between triangle points
+        var midpoint1 = midpoint(triangle.point1, triangle.point2);
+        var midpoint2 = midpoint(triangle.point2, triangle.point3);
+        var midpoint3 = midpoint(triangle.point3, triangle.point1);
+
+        // Construct 3 smaller triangles from calculated midpoints
+        var newTriangle1 = new Triangle(triangle.point1, midpoint1, midpoint3);
+        var newTriangle2 = new Triangle(triangle.point2, midpoint1, midpoint2);
+        var newTriangle3 = new Triangle(triangle.point3, midpoint2, midpoint3);
+
+        if(--iteration === 0) {
+            return;
+        } else { // Recursive call on three smaller triangles
+            this.sierpinskiTriangle(iteration, newTriangle1, ctx);
+            this.sierpinskiTriangle(iteration, newTriangle2, ctx);
+            this.sierpinskiTriangle(iteration, newTriangle3, ctx);
+        }
+    }
+}
+
+function FractalViewport() {
+    this.rect = new Rectangle(0, 0, window.innerWidth, window.innerHeight);
+
+    this.displayCanvas = document.getElementById("fractalCanvas");
+    this.displayCtx = this.displayCanvas.getContext("2d");
+
+    this.zoom = 1.0;
+    this.scrollX = 0.0;
+    this.scrollY = 0.0;
+
+    this.is_dragging = false;
+
+    this.displayCanvas.width = this.rect.w;
+    this.displayCanvas.height = this.rect.h;
+}
+
+function FractalGeneratorDisplay() {
+    this.zoomDisplay = document.getElementById("scrollValue");
+    this.scrollXDisplay = document.getElementById("viewXValue");
+    this.scrollYDisplay = document.getElementById("viewYValue");
+    this.dragDisplay = document.getElementById("draggingValue");
+
+    this.zoomDisplay.innerHTML = "ZOOM";
+    this.scrollXDisplay.innerHTML = "SCROLL X";
+    this.scrollYDisplay.innerHTML = "SCROLL Y";
+    this.dragDisplay.innerHTML = "DRAG BOOL";
 }
 
 function midpoint(point1, point2) {
