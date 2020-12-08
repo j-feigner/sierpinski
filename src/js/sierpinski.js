@@ -74,26 +74,9 @@ function FractalGenerator() {
         this.createEventListeners();
 
         if(option === "sierpinski") {
-            // Line style settings for triangle
-            this.renderingCtx.lineWidth = 1;
-            this.renderingCtx.strokeStyle = "white";
+            this.renderSierpinski();
     
-            // Create initial points of outer triangle
-            var centerX = this.renderingCanvas.width / 2;
-            var halfSideLength = this.renderingCanvas.height / Math.sqrt(3); 
-
-            var point1 = new Point(centerX, 0);
-            var point2 = new Point((this.renderingCanvas.width / 2) + halfSideLength, this.renderingCanvas.height);
-            var point3 = new Point((this.renderingCanvas.width / 2) - halfSideLength, this.renderingCanvas.height);
-            var outerTriangle = new Triangle(point1, point2, point3);
-
-            // Set iteration count and call recursive function to draw to rendering canvas
-            var iterations = 12;
-            this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx);
-            this.renderingCtx.stroke();
-    
-            // Draw scaled image of rendering canvas to display canvas
-            this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width, this.displayCanvas.height);
+            this.draw();
         } else {
             alert("BAD");
             return;
@@ -126,14 +109,36 @@ function FractalGenerator() {
             var relativeY = (event.offsetY - this.viewY) * heightRatio;
 
             this.zoom -= event.deltaY * 0.001 * this.zoom;
-            this.zoom = Math.round(this.zoom * 100) / 100;
+            this.zoom = Math.floor(this.zoom * 100) / 100;
+            this.zoom = clamp(this.zoom, 0.5, 8.0);
             this.display.zoom.innerHTML = "Zoom: " + this.zoom + "x";
 
             this.viewX = event.offsetX - ((relativeX * this.displayCanvas.width * this.zoom) / this.renderingCanvas.width);
             this.viewY = event.offsetY - ((relativeY * this.displayCanvas.height * this.zoom) / this.renderingCanvas.height);
 
+            //this.renderSierpinski();
             this.draw();
         })
+    }
+
+    this.renderSierpinski = function() {
+        // Line style settings for triangle
+        this.renderingCtx.lineWidth = 0.1;
+        this.renderingCtx.strokeStyle = "white";
+
+        // Create initial points of outer triangle
+        var centerX = this.renderingCanvas.width / 2;
+        var halfSideLength = this.renderingCanvas.height / Math.sqrt(3); 
+
+        var point1 = new Point(centerX, 0);
+        var point2 = new Point((this.renderingCanvas.width / 2) + halfSideLength, this.renderingCanvas.height);
+        var point3 = new Point((this.renderingCanvas.width / 2) - halfSideLength, this.renderingCanvas.height);
+        var outerTriangle = new Triangle(point1, point2, point3);
+
+        // Set iteration count and call recursive function to draw to rendering canvas
+        var iterations = 13;
+        this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx);
+        this.renderingCtx.stroke();
     }
 
     this.draw = function() {
@@ -173,7 +178,7 @@ function FractalGenerator() {
 function FractalGeneratorDisplay() {
     this.zoom = document.getElementById("scrollValue");
 
-    this.zoom.innerHTML = "Zoom: 1.00x"
+    this.zoom.innerHTML = "Zoom: 1.00x";
 }
 
 function midpoint(point1, point2) {
@@ -181,4 +186,14 @@ function midpoint(point1, point2) {
     mid.x = (point1.x + point2.x) / 2;
     mid.y = (point1.y + point2.y) / 2;
     return mid;
+}
+
+function clamp(num, min, max) {
+    if(num < min) {
+        return min;
+    } else if(num > max) {
+        return max;
+    } else {
+        return num;
+    }
 }
