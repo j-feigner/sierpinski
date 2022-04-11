@@ -1,16 +1,8 @@
 window.onload = main;
 
 function main() {
-    var app = new FractalGenerator();
-    app.start("sierpinski");
-/* 
-    c.addEventListener("wheel", (event) => {
-        scrollValue -= event.deltaY * 0.0001;
-
-        zoomRatio = Math.round((1 + scrollValue) * 100) / 100;
-
-        scrollValueDisplay.innerHTML = zoomRatio;
-    })*/
+    var app = new Sierpinski();
+    app.start();
 }
 
 function Point(x, y) {
@@ -44,27 +36,31 @@ function Rectangle(x, y, width, height) {
     }
 }
 
-function FractalGenerator() {
-    this.renderingCanvas = document.createElement("canvas");
-    this.renderingCtx = this.renderingCanvas.getContext("2d");
+class Sierpinski {
+    constructor() {
+        this.renderingCanvas = document.createElement("canvas");
+        this.renderingCtx = this.renderingCanvas.getContext("2d");
 
-    this.displayCanvas = document.getElementById("fractalCanvas");
-    this.displayCtx = this.displayCanvas.getContext("2d");
+        this.displayCanvas = document.getElementById("fractalCanvas");
+        this.displayCtx = this.displayCanvas.getContext("2d");
 
-    this.renderScaleFactor = 8;
+        this.renderScaleFactor = 1;
 
-    this.zoom = 1.0;
+        this.zoom = 1.0;
 
-    this.viewX = 0.0;
-    this.viewY = 0.0;
+        this.viewX = 0.0;
+        this.viewY = 0.0;
 
-    this.dragX = 0;
-    this.dragY = 0;
-    this.isDragging = false;
+        this.dragX = 0;
+        this.dragY = 0;
+        this.isDragging = false;
 
-    this.display = new FractalGeneratorDisplay();
+        this.display = {
+            zoom: document.getElementById("scrollValue")
+        }
+    }
 
-    this.start = function(option) {
+    start() {
         this.displayCanvas.width = window.innerWidth;
         this.displayCanvas.height = window.innerHeight;
 
@@ -72,18 +68,11 @@ function FractalGenerator() {
         this.renderingCanvas.height = this.displayCanvas.height * this.renderScaleFactor;
 
         this.createEventListeners();
-
-        if(option === "sierpinski") {
-            this.renderSierpinski();
-    
-            this.draw();
-        } else {
-            alert("BAD");
-            return;
-        }
+        this.renderSierpinski();
+        this.draw();
     }
 
-    this.createEventListeners = function() {
+    createEventListeners() {
         // Click and drag events
         this.displayCanvas.addEventListener("mousedown", () => {
             this.isDragging = true;
@@ -110,7 +99,7 @@ function FractalGenerator() {
 
             this.zoom -= event.deltaY * 0.001 * this.zoom;
             this.zoom = Math.floor(this.zoom * 100) / 100;
-            this.zoom = clamp(this.zoom, 0.5, 8.0);
+            this.zoom = clamp(this.zoom, 0.5, 10.0);
             this.display.zoom.innerHTML = "Zoom: " + this.zoom + "x";
 
             this.viewX = event.offsetX - ((relativeX * this.displayCanvas.width * this.zoom) / this.renderingCanvas.width);
@@ -121,7 +110,7 @@ function FractalGenerator() {
         })
     }
 
-    this.renderSierpinski = function() {
+    renderSierpinski() {
         // Line style settings for triangle
         this.renderingCtx.lineWidth = 0.1;
         this.renderingCtx.strokeStyle = "white";
@@ -136,19 +125,19 @@ function FractalGenerator() {
         var outerTriangle = new Triangle(point1, point2, point3);
 
         // Set iteration count and call recursive function to draw to rendering canvas
-        var iterations = 13;
+        var iterations = 8;
         this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx);
         this.renderingCtx.stroke();
     }
 
-    this.draw = function() {
+    draw() {
         this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
         this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width * this.zoom, this.displayCanvas.height * this.zoom);
     }
 
     // Recursive function that creates all lines within 
     // sierpinski triangle on a given iteration count.
-    this.sierpinskiTriangle = function(iteration, triangle, ctx) {
+    sierpinskiTriangle(iteration, triangle, ctx) {
         // Draw initial triangle given to function
         ctx.moveTo(triangle.point1.x, triangle.point1.y);
         ctx.lineTo(triangle.point2.x, triangle.point2.y);
@@ -173,12 +162,6 @@ function FractalGenerator() {
             this.sierpinskiTriangle(iteration, newTriangle3, ctx);
         }
     }
-}
-
-function FractalGeneratorDisplay() {
-    this.zoom = document.getElementById("scrollValue");
-
-    this.zoom.innerHTML = "Zoom: 1.00x";
 }
 
 function midpoint(point1, point2) {
