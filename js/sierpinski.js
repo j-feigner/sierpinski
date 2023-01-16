@@ -44,7 +44,7 @@ class Sierpinski {
         this.displayCanvas = document.getElementById("fractalCanvas");
         this.displayCtx = this.displayCanvas.getContext("2d");
 
-        this.renderScaleFactor = 1;
+        this.renderScaleFactor = 2;
 
         this.zoom = 1.0;
 
@@ -129,9 +129,13 @@ class Sierpinski {
         var outerTriangle = new Triangle(point1, point2, point3);
 
         // Set iteration count and call recursive function to draw to rendering canvas
-        var iterations = 1;
-        this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx);
+        var iterations = 8;
+        this.drawTriangle(this.renderingCtx, outerTriangle);
         this.renderingCtx.stroke();
+        this.draw();
+        setTimeout(() => {
+            this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx, 1000);
+        }, 1000)
     }
 
     draw() {
@@ -139,31 +143,55 @@ class Sierpinski {
         this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width * this.zoom, this.displayCanvas.height * this.zoom);
     }
 
-    // Recursive function that creates all lines within 
-    // sierpinski triangle on a given iteration count.
-    sierpinskiTriangle(iteration, triangle, ctx) {
-        // Draw initial triangle given to function
+    drawTriangle(ctx, triangle) {
         ctx.moveTo(triangle.point1.x, triangle.point1.y);
         ctx.lineTo(triangle.point2.x, triangle.point2.y);
         ctx.lineTo(triangle.point3.x, triangle.point3.y);
-        ctx.lineTo(triangle.point1.x, triangle.point1.y);
+        ctx.lineTo(triangle.point1.x, triangle.point1.y);   
+    }
 
+    // Recursive function that creates all lines within 
+    // sierpinski triangle on a given iteration count.
+    sierpinskiTriangle(iteration, triangle, ctx, animationDelay) {
         // Calculate midpoints between triangle points
-        var midpoint1 = midpoint(triangle.point1, triangle.point2);
-        var midpoint2 = midpoint(triangle.point2, triangle.point3);
-        var midpoint3 = midpoint(triangle.point3, triangle.point1);
+        var midpointTriangle = new Triangle(
+            midpoint(triangle.point1, triangle.point2),
+            midpoint(triangle.point2, triangle.point3),
+            midpoint(triangle.point3, triangle.point1)
+        )
+
+        // Draw inverted midpoint triangle
+        this.drawTriangle(this.renderingCtx, midpointTriangle);
+
+        // Animation draw step
+        this.renderingCtx.stroke();
+        this.draw();
 
         // Construct 3 smaller triangles from calculated midpoints
-        var newTriangle1 = new Triangle(triangle.point1, midpoint1, midpoint3);
-        var newTriangle2 = new Triangle(triangle.point2, midpoint1, midpoint2);
-        var newTriangle3 = new Triangle(triangle.point3, midpoint2, midpoint3);
+        var newTriangle1 = new Triangle(
+                triangle.point1, 
+                midpointTriangle.point1, 
+                midpointTriangle.point3
+        );
+        var newTriangle2 = new Triangle(
+                triangle.point2, 
+                midpointTriangle.point1, 
+                midpointTriangle.point2
+        );
+        var newTriangle3 = new Triangle(
+                triangle.point3, 
+                midpointTriangle.point2, 
+                midpointTriangle.point3
+        );
 
         if(--iteration === 0) {
             return;
         } else { // Recursive call on three smaller triangles
-            this.sierpinskiTriangle(iteration, newTriangle1, ctx);
-            this.sierpinskiTriangle(iteration, newTriangle2, ctx);
-            this.sierpinskiTriangle(iteration, newTriangle3, ctx);
+            setTimeout(() => {
+                this.sierpinskiTriangle(iteration, newTriangle1, ctx, animationDelay);
+                this.sierpinskiTriangle(iteration, newTriangle2, ctx, animationDelay);
+                this.sierpinskiTriangle(iteration, newTriangle3, ctx, animationDelay);
+            }, animationDelay)
         }
     }
 }
