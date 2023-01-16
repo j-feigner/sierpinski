@@ -99,7 +99,7 @@ class Sierpinski {
 
             this.zoom -= event.deltaY * 0.001 * this.zoom;
             this.zoom = Math.floor(this.zoom * 100) / 100;
-            this.zoom = clamp(this.zoom, 0.5, 10.0);
+            this.zoom = clamp(this.zoom, 0.5, 20.0);
             this.display.zoom.innerHTML = "Zoom: " + this.zoom + "x";
 
             this.viewX = event.offsetX - ((relativeX * this.displayCanvas.width * this.zoom) / this.renderingCanvas.width);
@@ -113,7 +113,7 @@ class Sierpinski {
     renderSierpinski() {
         // Line style settings for triangle
         this.renderingCtx.lineWidth = 0.1;
-        this.renderingCtx.strokeStyle = "white";
+        this.renderingCtx.strokeStyle = "rgb(30, 70, 164)";
 
         // Create initial points of outer triangle
         var centerX = this.renderingCanvas.width / 2;
@@ -125,7 +125,7 @@ class Sierpinski {
         var outerTriangle = new Triangle(point1, point2, point3);
 
         // Set iteration count and call recursive function to draw to rendering canvas
-        var iterations = 8;
+        var iterations = 12;
         this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx);
         this.renderingCtx.stroke();
     }
