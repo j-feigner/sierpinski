@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sierpinski</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Proza+Libre&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
@@ -10,14 +15,36 @@
         <div class="canvas-container">
             <canvas id="fractalCanvas"></canvas>
         </div>
-        <span id="valueDisplay" class="value-display">
-            <p id="scrollValue"></p>
-            <p id="draggingValue"></p>
-            <p id="viewXValue"></p>
-            <p id="viewYValue"></p>
-            <p id="relativeX"></p>
-            <p id="relativeY"></p>
-        </span>
+        <div id="ui">
+            <div id="zoom">
+                <span>Zoom: </span>
+                <span id="zoom-value">1.00x</span>
+            </div>
+            <div id="render-scale">
+                <span>Render Quality: </span>
+                <label>
+                    <input type="radio" name="render" value="1">
+                    1x
+                </label>
+                <label>
+                    <input type="radio" name="render" value="2" checked="checked">
+                    2x
+                </label>
+                <label>
+                    <input type="radio" name="render" value="4">
+                    4x
+                </label>
+            </div>
+            <div id="iterations">
+                <label>
+                    Iterations:
+                    <input type="number" name="iteration-count" min="1" max="10" value="7">
+                </label>
+            </div>
+            <div id="submit">
+                <button>Go</button>
+            </div>
+        </div>
     </div>
     <script src="./js/sierpinski.js"></script>
 </body>

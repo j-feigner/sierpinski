@@ -38,13 +38,20 @@ function Rectangle(x, y, width, height) {
 
 class Sierpinski {
     constructor() {
+        this.ui = document.getElementById("ui");
+        this.zoomDisplay = ui.querySelector("#zoom-value");
+        this.renderScaleInput = ui.querySelector("input[name='render']:checked");
+        this.iterationInput = ui.querySelector("input[name='iteration-count']");
+        this.submitButton = ui.querySelector("#submit");
+
         this.renderingCanvas = document.createElement("canvas");
         this.renderingCtx = this.renderingCanvas.getContext("2d");
 
         this.displayCanvas = document.getElementById("fractalCanvas");
         this.displayCtx = this.displayCanvas.getContext("2d");
 
-        this.renderScaleFactor = 2;
+        this.renderScaleFactor = this.renderScaleInput.value;
+        this.iterations = this.iterationInput.value;
 
         this.zoom = 1.0;
 
@@ -55,20 +62,24 @@ class Sierpinski {
         this.dragY = 0;
         this.isDragging = false;
 
-        this.display = {
-            zoom: document.getElementById("scrollValue")
-        }
+        this.timeouts = [];
     }
 
     start() {
         resetCanvasBitmap(this.displayCanvas);
-
-        this.renderingCanvas.width = this.displayCanvas.width * this.renderScaleFactor;
-        this.renderingCanvas.height = this.displayCanvas.height * this.renderScaleFactor;
-
+        this.resizeRenderCanvas();
         this.createEventListeners();
         this.renderSierpinski();
-        this.draw();
+    }
+
+    updateFromUI() {
+        this.renderScaleFactor = this.ui.querySelector("input[name='render']:checked").value;
+        this.iterations = this.iterationInput.value;
+    }
+
+    resizeRenderCanvas() {
+        this.renderingCanvas.width = this.displayCanvas.width * this.renderScaleFactor;
+        this.renderingCanvas.height = this.displayCanvas.height * this.renderScaleFactor;
     }
 
     createEventListeners() {
@@ -99,13 +110,25 @@ class Sierpinski {
             this.zoom -= event.deltaY * 0.001 * this.zoom;
             this.zoom = Math.floor(this.zoom * 100) / 100;
             this.zoom = clamp(this.zoom, 0.5, 20.0);
-            this.display.zoom.innerHTML = "Zoom: " + this.zoom + "x";
+            this.zoomDisplay.innerHTML = this.zoom + "x";
 
             this.viewX = event.offsetX - ((relativeX * this.displayCanvas.width * this.zoom) / this.renderingCanvas.width);
             this.viewY = event.offsetY - ((relativeY * this.displayCanvas.height * this.zoom) / this.renderingCanvas.height);
 
             //this.renderSierpinski();
             this.draw();
+        })
+
+        // UI Submit event
+        this.submitButton.addEventListener("click", e => {
+            this.timeouts.map(timeout => clearTimeout(timeout));
+            this.timeouts = [];
+
+            this.updateFromUI();
+
+            this.resizeRenderCanvas();
+            this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
+            this.renderSierpinski();
         })
     }
 
@@ -129,13 +152,12 @@ class Sierpinski {
         var outerTriangle = new Triangle(point1, point2, point3);
 
         // Set iteration count and call recursive function to draw to rendering canvas
-        var iterations = 8;
         this.drawTriangle(this.renderingCtx, outerTriangle);
         this.renderingCtx.stroke();
         this.draw();
-        setTimeout(() => {
-            this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx, 1000);
-        }, 1000)
+        this.timeouts.push(setTimeout(() => {
+            this.sierpinskiTriangle(this.iterations, outerTriangle, this.renderingCtx, 1000);
+        }, 1000))
     }
 
     draw() {
@@ -185,13 +207,14 @@ class Sierpinski {
         );
 
         if(--iteration === 0) {
+            this.isRendering = false;
             return;
         } else { // Recursive call on three smaller triangles
-            setTimeout(() => {
+            this.timeouts.push(setTimeout(() => {
                 this.sierpinskiTriangle(iteration, newTriangle1, ctx, animationDelay);
                 this.sierpinskiTriangle(iteration, newTriangle2, ctx, animationDelay);
                 this.sierpinskiTriangle(iteration, newTriangle3, ctx, animationDelay);
-            }, animationDelay)
+            }, animationDelay))
         }
     }
 }
