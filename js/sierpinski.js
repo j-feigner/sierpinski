@@ -92,7 +92,7 @@ class Sierpinski {
                 this.viewX += event.movementX;
                 this.viewY += event.movementY;
 
-                this.draw();
+                this.drawDisplay();
             }
         })
         this.displayCanvas.addEventListener("mouseup", () => {
@@ -116,7 +116,7 @@ class Sierpinski {
             this.viewY = event.offsetY - ((relativeY * this.displayCanvas.height * this.zoom) / this.renderingCanvas.height);
 
             //this.renderSierpinski();
-            this.draw();
+            this.drawDisplay();
         })
 
         // UI Submit event
@@ -153,23 +153,24 @@ class Sierpinski {
 
         // Set iteration count and call recursive function to draw to rendering canvas
         this.drawTriangle(this.renderingCtx, outerTriangle);
-        this.renderingCtx.stroke();
-        this.draw();
+        this.drawDisplay();
         this.timeouts.push(setTimeout(() => {
             this.sierpinskiTriangle(this.iterations, outerTriangle, this.renderingCtx, 1000);
         }, 1000))
     }
 
-    draw() {
+    drawDisplay() {
         this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
         this.displayCtx.drawImage(this.renderingCanvas, this.viewX, this.viewY, this.displayCanvas.width * this.zoom, this.displayCanvas.height * this.zoom);
     }
 
     drawTriangle(ctx, triangle) {
+        ctx.beginPath();
         ctx.moveTo(triangle.point1.x, triangle.point1.y);
         ctx.lineTo(triangle.point2.x, triangle.point2.y);
         ctx.lineTo(triangle.point3.x, triangle.point3.y);
-        ctx.lineTo(triangle.point1.x, triangle.point1.y);   
+        ctx.closePath();
+        this.renderingCtx.stroke();
     }
 
     // Recursive function that creates all lines within 
@@ -186,8 +187,7 @@ class Sierpinski {
         this.drawTriangle(this.renderingCtx, midpointTriangle);
 
         // Animation draw step
-        this.renderingCtx.stroke();
-        this.draw();
+        this.drawDisplay();
 
         // Construct 3 smaller triangles from calculated midpoints
         var newTriangle1 = new Triangle(
@@ -207,7 +207,6 @@ class Sierpinski {
         );
 
         if(--iteration === 0) {
-            this.isRendering = false;
             return;
         } else { // Recursive call on three smaller triangles
             this.timeouts.push(setTimeout(() => {
