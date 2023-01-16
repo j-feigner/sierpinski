@@ -61,8 +61,7 @@ class Sierpinski {
     }
 
     start() {
-        this.displayCanvas.width = window.innerWidth;
-        this.displayCanvas.height = window.innerHeight;
+        resetCanvasBitmap(this.displayCanvas);
 
         this.renderingCanvas.width = this.displayCanvas.width * this.renderScaleFactor;
         this.renderingCanvas.height = this.displayCanvas.height * this.renderScaleFactor;
@@ -112,20 +111,25 @@ class Sierpinski {
 
     renderSierpinski() {
         // Line style settings for triangle
-        this.renderingCtx.lineWidth = 0.1;
+        this.renderingCtx.lineWidth = 1;
         this.renderingCtx.strokeStyle = "rgb(30, 70, 164)";
 
         // Create initial points of outer triangle
         var centerX = this.renderingCanvas.width / 2;
-        var halfSideLength = this.renderingCanvas.height / Math.sqrt(3); 
+        var centerY = this.renderingCanvas.height * 2 / 3;
 
-        var point1 = new Point(centerX, 0);
-        var point2 = new Point((this.renderingCanvas.width / 2) + halfSideLength, this.renderingCanvas.height);
-        var point3 = new Point((this.renderingCanvas.width / 2) - halfSideLength, this.renderingCanvas.height);
+        var triangleHeight = this.renderingCanvas.height * 0.95;
+        var halfSideLength = triangleHeight / Math.sqrt(3); 
+        var apothem = triangleHeight / 3;
+        var apothemComplement = triangleHeight - apothem;
+
+        var point1 = new Point(centerX, centerY - apothemComplement);
+        var point2 = new Point(centerX + halfSideLength, centerY + apothem);
+        var point3 = new Point(centerX - halfSideLength, centerY + apothem);
         var outerTriangle = new Triangle(point1, point2, point3);
 
         // Set iteration count and call recursive function to draw to rendering canvas
-        var iterations = 12;
+        var iterations = 1;
         this.sierpinskiTriangle(iterations, outerTriangle, this.renderingCtx);
         this.renderingCtx.stroke();
     }
@@ -179,4 +183,9 @@ function clamp(num, min, max) {
     } else {
         return num;
     }
+}
+
+function resetCanvasBitmap(canvas) {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
 }
