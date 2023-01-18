@@ -61,6 +61,7 @@ class Sierpinski {
         this.dragX = 0;
         this.dragY = 0;
         this.isDragging = false;
+        this.lastEvent = null;
 
         this.timeouts = [];
     }
@@ -86,7 +87,8 @@ class Sierpinski {
         // Click and drag events
         this.displayCanvas.addEventListener("mousedown", () => {
             this.isDragging = true;
-        })
+        });
+
         this.displayCanvas.addEventListener("mousemove", (event) => {
             if(this.isDragging) {
                 this.viewX += event.movementX;
@@ -94,10 +96,11 @@ class Sierpinski {
 
                 this.drawDisplay();
             }
-        })
+        });
+
         this.displayCanvas.addEventListener("mouseup", () => {
             this.isDragging = false;
-        })
+        });
 
         // Zoom events
         this.displayCanvas.addEventListener("wheel", (event) => {
@@ -141,7 +144,14 @@ class Sierpinski {
         var centerX = this.renderingCanvas.width / 2;
         var centerY = this.renderingCanvas.height * 2 / 3;
 
-        var triangleHeight = this.renderingCanvas.height * 0.95;
+        // Check screen dimensions for mobile
+        var triangleHeight = 0;
+        if(this.renderingCanvas.width >= this.renderingCanvas.height) {
+            triangleHeight = this.renderingCanvas.height * 0.95;
+        } else {
+            triangleHeight = Math.sqrt(3) * 0.95 * this.renderingCanvas.width / 2;
+        }
+
         var halfSideLength = triangleHeight / Math.sqrt(3); 
         var apothem = triangleHeight / 3;
         var apothemComplement = triangleHeight - apothem;
